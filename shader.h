@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 
+using namespace std;
 class Shader
 {
 public:
