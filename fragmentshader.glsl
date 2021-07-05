@@ -13,6 +13,6 @@
 
         void main()
         {
-        fragcolor=mix(texture(mytexture,atex),texture(mytexture1,atex),tp);
+        fragcolor=mix(texture(mytexture,atex),texture(mytexture1,atex),tp+0.2);
         //fragcolor = (ourcolor, 1.0);
         }

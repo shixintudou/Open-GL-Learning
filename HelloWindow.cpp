@@ -4,20 +4,35 @@
 #include <GLFW/glfw3.h>
 #include<iostream>
 #include"shader.h"
+#include <glm/glm/glm.hpp>
+#include <glm/glm/gtc/matrix_transform.hpp>
+#include <glm/glm/gtc/type_ptr.hpp>
 
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
+using namespace glm;
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
+
+float deltatime = 0.0f;
+float lastframe = 0.0f;
+float yaws = -90.0f;
+float pitchs = 0.0f;
+vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
+bool firstmouse = true;
+float lastx = 960;
+float lasty = 540;
 int main()
 {
+    /*vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+    mat4 trans = mat4(1.0f);
+    trans = translate(trans, vec3(0.5f, -0.5f, 0.0f));
+    vec = trans * vec;
+    trans = rotate(trans, radians(90.0f), vec3(0.0f, 0.0f, 1.0f));
+    trans = scale(trans, vec3(0.5f, 0.5f, 0.5f));
+    std::cout << vec.x << vec.y << vec.z << std::endl;*/
     //const char* vertexShaderSource = "#version 330 core\n"
     //    "layout (location = 0) in vec3 aPos;\n"
     //    "layout( location= 1) in vec3 acolor;\n"
@@ -56,14 +71,70 @@ int main()
     //    -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // 左下
     //     0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // 顶部
     //};
+    //float vertices[] = {
+    //    //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
+    //         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
+    //         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
+    //        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
+    //        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
+    //};
     float vertices[] = {
-        //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
-             0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
-             0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
-            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
-            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
+    glm::vec3 cubePositions[] =
+    {
+     glm::vec3(0.0f,  0.0f,  0.0f),
+     glm::vec3(2.0f,  5.0f, -15.0f),
+     glm::vec3(-1.5f, -2.2f, -2.5f),
+     glm::vec3(-3.8f, -2.0f, -12.3f),
+     glm::vec3(2.4f, -0.4f, -3.5f),
+     glm::vec3(-1.7f,  3.0f, -7.5f),
+     glm::vec3(1.3f, -2.0f, -2.5f),
+     glm::vec3(1.5f,  2.0f, -2.5f),
+     glm::vec3(1.5f,  0.2f, -1.5f),
+     glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
     unsigned int indices[] = 
     {
         0, 1, 3, // 第一个三角形
@@ -71,7 +142,24 @@ int main()
         //0, 3, 4
     };
 
-    
+    //mat4 model = mat4(1.0f);//模型矩阵，使平面绕x轴旋转
+    //model = rotate(model, radians(-55.0f), vec3(1.0f, 0.0f, 0.0f));
+
+    mat4 view = mat4(1.0f);// 观察矩阵
+    view = translate(view, vec3(0.0f, 0.0f, -3.0f));
+
+    mat4 projection = mat4(1.0f);//投影矩阵
+    projection = perspective(radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
+
+    mat4 trans = mat4(1.0f);
+
+    vec3 cameraPos = vec3(0.0f, 0.0f, 3.0f);//摄像机位置
+    vec3 cameraTarget = vec3(0.0f, 0.0f, 0.0f);
+    vec3 cameraDirection = normalize(cameraPos - cameraTarget);
+    vec3 up = vec3(0.0f, 1.0f, 0.0f);
+    vec3 cameraRight = normalize(cross(up, cameraDirection));
+    vec3 cameraUp = cross(cameraDirection, cameraRight);
+      
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -79,7 +167,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);   
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
-    if (window == NULL)
+    if (window == NULL) 
     {
         std::cout << "Fail to create window" << std::endl;
         glfwTerminate();
@@ -141,13 +229,13 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    //glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -184,11 +272,28 @@ int main()
 
     float i = 0.0f;
     myshader.setFloat("tp", i);
+
+    //将变换矩阵传给uniform
+    unsigned int transformloc = glGetUniformLocation(myshader.ID, "transform");
+    unsigned int viewloc = glGetUniformLocation(myshader.ID, "view");
+    glUniformMatrix4fv(viewloc, 1, GL_FALSE, value_ptr(view));
+    unsigned int projectionloc = glGetUniformLocation(myshader.ID, "projection");
+    glUniformMatrix4fv(projectionloc, 1, GL_FALSE, value_ptr(projection));
+
+    glEnable(GL_DEPTH_TEST);//启用深度测试
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     while (!glfwWindowShouldClose(window))
     {
+        glfwSetCursorPosCallback(window, mouse_callback);
+
+        float currentframe = glfwGetTime();
+        deltatime = currentframe - lastframe;
+        lastframe = currentframe;
+
         processInput(window);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         /*float timeValue = glfwGetTime();
         float greenValue = (sin(timeValue / 2.0f)) + 0.5f;
@@ -208,14 +313,39 @@ int main()
             i -= 0.1;
             myshader.setFloat("tp", i);
         }
+        float cameraSpeed = 5.0f; // adjust accordingly
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            cameraPos += cameraSpeed * cameraFront * deltatime;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            cameraPos -= cameraSpeed * cameraFront * deltatime;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed * deltatime;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed * deltatime;
+        //trans = rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        //trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        glUniformMatrix4fv(transformloc, 1, GL_FALSE, value_ptr(trans));       
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, tex2);
         glBindVertexArray(VAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 9);
+        view = lookAt(cameraPos, cameraPos + cameraFront, up);
+        glUniformMatrix4fv(glGetUniformLocation(myshader.ID, "view"), 1, GL_FALSE, value_ptr(view));
+        for (int i = 0; i < 10; i++)
+        {
+            mat4 model = mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));            
+            model = rotate(model, (float)glfwGetTime(), vec3(0.0f, 1.0f, 1.0f));        
+            int modeloc = glGetUniformLocation(myshader.ID, "model");
+            glUniformMatrix4fv(modeloc, 1, GL_FALSE, value_ptr(model));
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
         //glBindTexture(GL_TEXTURE_2D, texture);       
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         //glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
@@ -230,4 +360,41 @@ int main()
     //glDeleteProgram(shaderprogram);
     glfwTerminate();
     return 0;
+}
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    glViewport(0, 0, width, height);
+}
+void processInput(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstmouse)
+    {
+        lastx = xpos;
+        lasty = ypos;
+        firstmouse = false;
+    }
+    float xoffset = xpos - lastx;
+    float yoffset = ypos - lasty;
+
+    float sensitivity = 0.05f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+    yaws += xoffset;
+    pitchs += yoffset;
+    if (pitchs > 89.0f)
+        pitchs = 89.0f;
+    if (pitchs < -89.0f)
+        pitchs = -89.0f;
+    vec3 front;
+    front.x = cos(glm::radians(yaws)) * cos(glm::radians(pitchs));
+    front.y = -sin(glm::radians(pitchs));
+    front.z = sin(glm::radians(yaws)) * cos(glm::radians(pitchs));
+    cameraFront = glm::normalize(front);
+    pitchs = 0.0f;
+    yaws = -90.0f;
 }
