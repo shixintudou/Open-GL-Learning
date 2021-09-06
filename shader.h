@@ -22,17 +22,17 @@ public:
 		fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         try
         {
-            // 打开文件
+            // 鎵撳紑鏂囦欢
             vShaderFile.open(vertexPath);
             fShaderFile.open(fragmentPath);
             std::stringstream vShaderStream, fShaderStream;
-            // 读取
+            // 璇诲彇
             vShaderStream << vShaderFile.rdbuf();
             fShaderStream << fShaderFile.rdbuf();
-            // 关闭
+            // 鍏抽棴
             vShaderFile.close();
             fShaderFile.close();
-            // 转换为字符串
+            // 杞崲涓哄瓧绗︿覆
             vertexCode = vShaderStream.str();
             fragmentCode = fShaderStream.str();
         }
